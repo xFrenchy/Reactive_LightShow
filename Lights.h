@@ -3,9 +3,11 @@
 
 #include <Adafruit_NeoPixel.h>
 
-#define LED_PIN    6
+#define LED_PIN    2
 #define LED_COUNT 144
-#define digitalPin 7
+#define DIGITALPIN 8
+#define BRIGHTNESS 50
+
 
 enum class Status
 {
@@ -19,6 +21,7 @@ enum class Pattern{
 	revertFade,
 	evenOddFill,
 	lightChunks,
+	lightChunksMultiColor,
 	randomFill,
 	none
 };
@@ -39,6 +42,7 @@ class LightShow
 		Pattern currentPattern;	//Allows us to know which pattern is currently playing
 		Pattern previousPattern;	//Allows us to know what the previous pattern was so that we don't display the same one again
 		int iterationCounter;
+		bool even;	//used to switch back and forth between even and odd
 	public:
 		//constructor
 		LightShow();
@@ -70,7 +74,7 @@ class LightShow
 		//Function that will roll for a new pattern;
 		void rollForPattern();
 		//Function that combines every pattern together and reacts based on the sound detector, main function, default parameters for other functions to call
-		void play(bool evenOdd = false, int color = 0);
+		void play();
 };
 
 #endif

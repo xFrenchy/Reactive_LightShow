@@ -8,7 +8,6 @@ LightShow::LightShow(){
 		//   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
 		//   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 	delayValue = 370;	// This will can go up a lot for a dramatic drop, or go down when the beats are rising
-	oldColor = 0;
 	fadingOnGoing = false;
 	currentColorIndex = 0;
 	beatsPerSecond = 145;
@@ -27,11 +26,12 @@ LightShow::LightShow(){
 	currentPattern = Pattern::none;
 	previousPattern = currentPattern;
 	iterationCounter = random(7-35);	//patterns will execute for a random amounts of times in that range
+	even = false;
 }
 
 void LightShow::incrementColorCounter(){
 	++currentColorIndex;
-	if(currentColorIndex > sizeof(colorArray)/sizeof(colorArray[0])){
+	if(currentColorIndex >= sizeof(colorArray)/sizeof(colorArray[0])){
 		//it went out of bounds, we reset
 		currentColorIndex = 0;
 		currentColor = colorArray[currentColorIndex];
@@ -42,7 +42,7 @@ void LightShow::incrementColorCounter(){
 }
 
 void LightShow::initialize(){
-	strip->setBrightness(50);	//0-255, this value should not go up or down throughout the code
+	strip->setBrightness(BRIGHTNESS);	//0-255, this value should not go up or down throughout the code
 	strip->begin();
 	strip->show(); // Initialize all pixels to 'off'
 	//Iterate through every single built in function we have
@@ -253,7 +253,7 @@ void LightShow::rollForPattern(){
 	currentPattern = Pattern::none;	//reseting
 	Pattern tempPattern = Pattern::none;
 	while(currentPattern == Pattern::none){	//if we accidentally role on the same pattern, it will stay at none and roll again
-		switch(random(0-4)){
+		switch(random(0-5)){
 		case 0:
 			tempPattern = Pattern::changeColor;
 			break;
@@ -261,9 +261,13 @@ void LightShow::rollForPattern(){
 			tempPattern = Pattern::evenOddFill;
 			break;
 		case 2:
-			tempPattern = Pattern::lightChunks
+			tempPattern = Pattern::lightChunks;
 			break;
 		case 3:
+			tempPattern = Pattern::lightChunksMultiColor;
+			tempPattern = Pattern::lightChunksMultiColor;
+			break;
+		case 4:
 			tempPattern = Pattern::randomFill;
 			break;
 		}
@@ -274,17 +278,24 @@ void LightShow::rollForPattern(){
 	}
 }
 
-void LightShow::play(bool evenOdd = false, int color = 0){
+void LightShow::play(){
 	//Here we want to call the proper function that will display the proper pattern
+	// Serial.println(currentColor);
+	Serial.println(currentColorIndex);
 	switch(currentPattern){
 		case Pattern::changeColor:
 			changeColor();
 			break;
 		case Pattern::evenOddFill:
-			evenOddFill(evenOdd);
+			evenOddFill(even);
+			even = !even;	//switches back and forth
 			break;
 		case Pattern::lightChunks:
-			lightChunks(color);
+			lightChunks();
+			incrementColorCounter();
+			break;
+		case Pattern::lightChunksMultiColor:
+			lightChunks(1);
 			break;
 		case Pattern::randomFill:
 			randomFill();
@@ -292,8 +303,10 @@ void LightShow::play(bool evenOdd = false, int color = 0){
 	}
 	//Now we want to check out iterationCounter and see if it's time to switch to a new pattern
 	--iterationCounter;
-	if(iterationCounter == 0){
+	// Serial.println(iterationCounter);
+	if(iterationCounter <= 0){
 		//let's roll for a new pattern to display
 		rollForPattern();
+		iterationCounter = random(7-35);
 	}
 }
