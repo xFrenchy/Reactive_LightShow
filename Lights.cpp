@@ -1,5 +1,9 @@
 #include "Lights.h"
 
+/*TODO: Look into a better way to fade colors. I'm having to, what it feels like, duplicate a lot of hard coded data, when I would like to create those data dynamically instead
+On the other end though, it is much faster computation since it's a simple indexing and when it's time sensitive such as every beat I want something to happen
+I would not like to miss a beat because my computation took longer to computer than the time in between the beats.*/
+
 LightShow::LightShow(){
 	strip = new Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 		// Argument 1 = Number of pixels in NeoPixel strip
@@ -20,6 +24,13 @@ LightShow::LightShow(){
 	colorArray[4] = strip->Color(102, 255, 255);	//teal
 	colorArray[5] = strip->Color(51, 0, 102);	//purple
 	colorArray[6] = strip->Color(255, 0, 255);	//pink
+	fadedColorsArray[0] = strip->Color(0, 0, 15);	//faded blue
+	fadedColorsArray[1] = strip->Color(15, 0, 0);	//faded red
+	fadedColorsArray[2] = strip->Color(30, 15, 0);	//faded orange/yellow
+	fadedColorsArray[3] = strip->Color(0, 15, 0);	//faded green
+	fadedColorsArray[4] = strip->Color(7, 20, 20);	//faded teal
+	fadedColorsArray[5] = strip->Color(15, 0, 30);	//faded purple
+	fadedColorsArray[6] = strip->Color(15, 0, 15);	//faded pink
 	currentColor = colorArray[currentColorIndex];
 	savedColor = 0;
 	colorStatus = Status::singleColor;
@@ -185,7 +196,7 @@ void LightShow::lightChunks(int color = 0)
 {
 	int j = 0;
 	bool space = false;
-	for(int i = 0; i < LED_COUNT; ++i){
+	for(int i = 1; i < LED_COUNT; ++i){
 		//Set up the conditions to know if I'm filling in empty colors or a chunk
 		if(j == 15 && space == false){
 			space = true;
@@ -248,12 +259,36 @@ void LightShow::randomFill(){
 	strip->show();
 }
 
+void LightShow::lowHigh(bool low){
+	if(low){
+		strip->fill(fadedColorsArray[currentColorIndex], 0, LED_COUNT);
+		strip->show();
+	}
+	else{
+		//well it's gotta be high haHAH
+		strip->fill(colorArray[currentColorIndex], 0, LED_COUNT);
+		strip->show();
+	}
+}
+
+void LightShow::fillFromMiddle(){
+	//The center of the LED strip index 0-143 (even amount of index so now true middle) 71/72
+	strip->setPixelColor(71, colorArray[currentColorIndex]);
+	strip->setPixelColor(72, colorArray[currentColorIndex]);
+	int growth = random(15-72);	//71 is the max that it can roll, 71-71 = 0 (valid index), 72+71 = 143
+	for(int i = 0; i < growth; ++i){
+		strip->setPixelColor(71-i, colorArray[currentColorIndex]);
+		strip->setPixelColor(72+i, colorArray[currentColorIndex]);
+	}
+	strip->show();
+}
+
 void LightShow::rollForPattern(){
 	previousPattern = currentPattern;	//saving
 	currentPattern = Pattern::none;	//reseting
 	Pattern tempPattern = Pattern::none;
 	while(currentPattern == Pattern::none){	//if we accidentally role on the same pattern, it will stay at none and roll again
-		switch(random(0-5)){
+		switch(random(0-7)){
 		case 0:
 			tempPattern = Pattern::changeColor;
 			break;
@@ -269,6 +304,12 @@ void LightShow::rollForPattern(){
 			break;
 		case 4:
 			tempPattern = Pattern::randomFill;
+			break;
+		case 5:
+			tempPattern = Pattern::lowHigh;
+			break;
+		case 6:
+			tempPattern = Pattern::fillFromMiddle;
 			break;
 		}
 		//Now check that we haven't rolled on the same pattern
@@ -299,6 +340,13 @@ void LightShow::play(){
 			break;
 		case Pattern::randomFill:
 			randomFill();
+			break;
+		case Pattern::lowHigh:
+			lowHigh(even);
+			even = !even;
+			break;
+		case Pattern::fillFromMiddle:
+			fillFromMiddle();
 			break;
 	}
 	//Now we want to check out iterationCounter and see if it's time to switch to a new pattern

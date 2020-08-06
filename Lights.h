@@ -23,6 +23,8 @@ enum class Pattern{
 	lightChunks,
 	lightChunksMultiColor,
 	randomFill,
+	lowHigh,
+	fillFromMiddle,
 	none
 };
 
@@ -32,11 +34,12 @@ class LightShow
 		Adafruit_NeoPixel *strip;	//the actual strip
 		int delayValue;	// This will can go up a lot for a dramatic drop, or go down when the beats are rising
 		uint32_t currentColor;	//the actual RGB value of the current color we are on
-		int fadingColorArray[3];	//this will be used to keep track of each RGB value of the current color such as [0, 0, 255], will only be used for fading
+		int fadingColorArray[3];	//this will be used to keep track of each RGB value of the current color such as [0, 0, 255] while it's fading, will only be used for fading
 		bool fadingOnGoing;	//will be used to determine if fading is in it's first iteration or not
 		int currentColorIndex;	//points to which color we are on
 		int beatsPerSecond;	//Not used currently
 		uint32_t colorArray[7];	//holds every single color
+		uint32_t fadedColorsArray[7];	//holds the RGB value of all 7 colors that we are using
 		uint32_t savedColor;	//will be used to store the color before fading originally applies
 		Status colorStatus;	//Allows us to know if the strip is currently one color or many
 		Pattern currentPattern;	//Allows us to know which pattern is currently playing
@@ -69,6 +72,10 @@ class LightShow
 		void lightChunks(int color = 0);
 		//Function that will randomly fill through the strip in groups of 3s
 		void randomFill();
+		//Function that will flash a low brightness or high brightness of the same color per beat
+		void lowHigh(bool low);
+		//Function that will fill randomly starting form the middle(like those old stereo bars moving up and down due to music)
+		void fillFromMiddle();
 		//TODO: Function that create a light show using all of our built in functions without using the sound detector
 		void automatic();
 		//Function that will roll for a new pattern;
